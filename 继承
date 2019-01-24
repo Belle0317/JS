@@ -1,0 +1,83 @@
+四.继承
+继承是面向对象中一个比较核心的概念。其他正统面向对象语言都会用两种方式实现继承：一个是接口实现，一个是继承。而ECMAScript 只支持继承，不支持接口实现，而实现继承的方式依靠原型链完成。
+
+在JavaScript 里，被继承的函数称为超类型(父类，基类也行，其他语言叫法)，继承的函数称为子类型(子类，派生类)
+
+1.call+遍历
+属性使用对象冒充（call）（实质上是改变了this指针的指向）继承基类，方法用遍历基类原型。
+
+复制代码
+function A()
+{
+    this.abc=12;
+}
+
+A.prototype.show=function ()
+{
+    alert(this.abc);
+};
+
+//继承A
+function B()
+{
+    //继承属性；this->new B()
+    A.call(this);   //有参数可以传参数A.call(this,name,age)
+}
+
+//继承方法；B.prototype=A.prototype;
+for(var i in A.prototype)
+{
+    B.prototype[i]=A.prototype[i];
+}
+//添加自己的方法
+B.prototype.fn=function ()
+{
+    alert('abc');
+};
+
+var objB=new B();
+var objA=new A();objB.show();
+复制代码
+可以实现多继承。
+
+2.寄生组合继承
+主要是Desk.prototype = new Box(); Desk 继承了Box，通过原型，形成链条。主要通过临时中转函数和寄生函数实现。
+
+临时中转函数：基于已有的对象创建新对象，同时还不必因此创建自定义类型
+寄生函数：目的是为了封装创建对象的过程
+
+复制代码
+//临时中转函数
+function obj(o) { //o表示将要传递进入的一个对象
+function F() {}   //F构造是一个临时新建的对象，用来存储传递过来的对象
+F.prototype = o;  //将o对象实例赋值给F构造的原型对象
+return new F();   //最后返回这个得到传递过来对象的对象实例
+}
+//寄生函数
+function create(box, desk) {
+var f = obj(box.prototype);
+f.constructor = desk;  //调整原型构造指针
+desk.prototype = f;
+}
+function Box(name) {
+this.name = name;
+this.arr = ['apple','pear','orange'];
+}
+Box.prototype.run = function () {
+return this.name;
+};
+function Desk(name, age) {
+Box.call(this, name);
+this.age = age;
+}
+//通过寄生组合继承实现继承
+create(Box, Desk); //这句话用来替代Desk.prototype = new Box();
+var desk = new Desk('Lee',100);
+desk.arr.push('peach');
+alert(desk.arr);
+alert(desk.run());
+复制代码
+临时中转函数和寄生函数主要做的工作流程：
+
+临时中转函数：返回的是基类的实例对象函数
+寄生函数：将返回的基类的实例对象函数的constructor指向派生类，派生类的prototype指向基类的实例对象函数（是一个函数原型），从而实现继承。

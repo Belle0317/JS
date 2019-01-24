@@ -1,0 +1,85 @@
+我们创建的每个函数都有一个prototype(原型)属性，这个属性是一个对象，它的用途是包含可以由特定类型的所有实例共享的属性和方法。
+逻辑上可以这么理解：prototype 通过调用构造函数而创建的那个对象的原型对象。使用原型的好处可以让所有对象实例共享它所包含的属性和方法。
+也就是说，不必在构造函数中定义对象信息，而是可以直接将这些信息添加到原型中。
+
+function Box() {} //声明一个构造函数
+Box.prototype.name = 'Lee'; //在原型里添加属性
+Box.prototype.age = 100;
+Box.prototype.run = function () { //在原型里添加方法
+return this.name + this.age + '运行中...';
+};
+
+所以，它解决了消耗内存问题。当然它也可以解决this作用域等问题。
+
+我们经常把属性（一些在实例化对象时属性值改变的），定义在构造函数内；把公用的方法添加在原型上面，也就是混合方式构造对象（构造方法+原型方式）：
+
+var person = function(name){
+   this.name = name
+  };
+  person.prototype.getName = function(){
+     return this.name; 
+  }
+  var zjh = new person(‘zhangjiahao’);
+  zjh.getName(); //zhangjiahao
+  
+ 详细介绍原型：
+
+1.原型对象
+　　每个javascript对象都有一个原型对象，这个对象在不同的解释器下的实现不同。比如在firefox下，每个对象都有一个隐藏的__proto__属性，这个属性就是“原型对象”的引用。
+
+2.原型链
+　　由于原型对象本身也是对象，根据上边的定义，它也有自己的原型，而它自己的原型对象又可以有自己的原型，这样就组成了一条链，这个就是原型链，JavaScritp引擎在访问对象的属性时，如果在对象本身中没有找到，则会去原型链中查找，如果找到，直接返回值，如果整个链都遍历且没有找到属性，则返回undefined.原型链一般实现为一个链表，这样就可以按照一定的顺序来查找。
+
+1）__proto__和prototype
+JS在创建对象（不论是普通对象还是函数对象）的时候，都有一个叫做__proto__的内置属性，用于指向创建它的函数对象的原型对象prototype。以上面的例子为例：
+
+console.log(zjh.__proto__ === person.prototype) //true
+同样，person.prototype对象也有__proto__属性，它指向创建它的函数对象（Object）的prototype
+
+console.log(person.prototype.__proto__ === Object.prototype) //true
+继续，Object.prototype对象也有__proto__属性，但它比较特殊，为null
+
+console.log(Object.prototype.__proto__) //null
+我们把这个有__proto__串起来的直到Object.prototype.__proto__为null的链叫做原型链。
+  
+  2）constructor
+  原型对象prototype中都有个预定义的constructor属性，用来引用它的函数对象。这是一种循环引用
+ person.prototype.constructor === person //true
+Function.prototype.constructor === Function //true
+Object.prototype.constructor === Object //true
+
+3）为加深对理解，我们再举一个例子：
+
+复制代码
+function Task(id){  
+    this.id = id;  
+}  
+    
+Task.prototype.status = "STOPPED";  
+Task.prototype.execute = function(args){  
+    return "execute task_"+this.id+"["+this.status+"]:"+args;  
+}  
+    
+var task1 = new Task(1);  
+var task2 = new Task(2);  
+    
+task1.status = "ACTIVE";  
+task2.status = "STARTING";  
+    
+print(task1.execute("task1"));  
+print(task2.execute("task2"));
+
+结果：
+execute task_1[ACTIVE]:task1
+execute task_2[STARTING]:task2
+
+由于Task本身仍旧是函数，因此其”__proto__”属性为Function.prototype, 而内建的函数原型对象的”__proto__”属性则为Object.prototype对象。最后Obejct.prototype的”__proto__”值为null。
+
+总结：
+
+实例对象的__proto__指向，其构造函数的原型；构造函数原型的constructor指向对应的构造函数。构造函数的prototype获得构造函数的原型。
+
+有时某种原因constructor指向有问题，可以通过
+
+constructor：构造函数名；//constructor : Task
+重新指向。
